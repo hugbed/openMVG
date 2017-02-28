@@ -80,6 +80,12 @@ public:
     return std::unique_ptr<Regions>(DescribeImpl(image, mask));
   }
 
+  /// Allocate regions depending of the Image_describer
+  std::unique_ptr<Regions> Allocate()
+  {
+    return std::unique_ptr<Regions>(AllocateImpl());
+  }
+
   //--
   // IO - one file for region features, one file for region descriptors
   //--
@@ -114,8 +120,10 @@ public:
   }
 
 protected:
-  /// Allocate regions depending of the Image_describer
-  virtual Regions* Allocate() const = 0;
+  // Return raw pointers to take advantage of covariant return types
+  // Pointer can then be wrapped in smart pointer to derived or base class
+  // public non-virtual interface provides this wrapping
+  virtual Regions* AllocateImpl() const = 0;
 
   virtual Regions* DescribeImpl(
     const image::Image<unsigned char> & image,

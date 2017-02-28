@@ -148,7 +148,7 @@ public:
 
 protected:
   /// Allocate Regions type depending of the Image_describer
-  Regions_ptr Allocate() const override
+  Regions_ptr AllocateImpl() const override
   {
     return new SIFT_Regions;
   }
@@ -176,7 +176,7 @@ protected:
     vl_sift_process_first_octave(filt, If.data());
 
     // Build alias to cached data
-    auto regions = std::unique_ptr<SIFT_Regions>(Allocate());
+    auto regions = std::unique_ptr<SIFT_Regions>(AllocateImpl());
 
     // reserve some memory for faster keypoint saving
     regions->Features().reserve(2000);

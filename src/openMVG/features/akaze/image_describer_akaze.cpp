@@ -24,7 +24,7 @@ AKAZE_Image_describer_SURF::Regions_ptr AKAZE_Image_describer_SURF::DescribeImpl
     akaze.Do_Subpixel_Refinement(kpts);
 
     // will be automatically deleted if something goes wrong
-    auto regions = std::unique_ptr<Regions_type>(Allocate());
+    auto regions = std::unique_ptr<Regions_type>(AllocateImpl());
     regions->Features().resize(kpts.size());
     regions->Descriptors().resize(kpts.size());
 
@@ -73,7 +73,7 @@ AKAZE_Image_describer_LIOP::Regions_ptr AKAZE_Image_describer_LIOP::DescribeImpl
     akaze.Do_Subpixel_Refinement(kpts);
 
     // will be automatically deleted if something goes wrong
-    auto regions = std::unique_ptr<Regions_type>(Allocate());
+    auto regions = std::unique_ptr<Regions_type>(AllocateImpl());
     regions->Features().resize(kpts.size());
     regions->Descriptors().resize(kpts.size());
 
@@ -136,7 +136,7 @@ AKAZE_Image_describer_MLDB::Regions_ptr AKAZE_Image_describer_MLDB::DescribeImpl
     akaze.Do_Subpixel_Refinement(kpts);
 
     // will be automatically deleted if something goes wrong
-    auto regions = std::unique_ptr<Regions_type>(Allocate());
+    auto regions = std::unique_ptr<Regions_type>(AllocateImpl());
     regions->Features().resize(kpts.size());
     regions->Descriptors().resize(kpts.size());
 

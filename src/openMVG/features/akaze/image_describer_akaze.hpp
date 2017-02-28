@@ -19,11 +19,10 @@
 
 #include <iostream>
 #include <numeric>
-//#include <memory>
-
 
 namespace openMVG {
 namespace features {
+
 
 enum EAKAZE_DESCRIPTOR
 {
@@ -120,8 +119,7 @@ public:
   }
 
 protected:
-
-  virtual Regions_ptr Allocate() const override
+  virtual Regions_ptr AllocateImpl() const override
   {
     return new Regions_type;
   }
@@ -153,7 +151,7 @@ public:
   }
 
 protected:
-  virtual Regions_ptr Allocate() const override
+  virtual Regions_ptr AllocateImpl() const override
   {
     return new Regions_type;
   }
@@ -184,14 +182,14 @@ public:
   }
 
 protected:
+  virtual Regions_ptr AllocateImpl() const override
+  {
+    return new Regions_type;
+  }
+
   float GetfDescFactor() const override
   {
     return 11.f*sqrtf(2.f);
-  }
-
-  virtual Regions_ptr Allocate() const override
-  {
-    return new Regions_type;
   }
 
   Regions_ptr DescribeImpl(
