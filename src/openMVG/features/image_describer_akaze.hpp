@@ -19,6 +19,7 @@
 
 #include <iostream>
 #include <numeric>
+//#include <memory>
 
 
 namespace openMVG {
