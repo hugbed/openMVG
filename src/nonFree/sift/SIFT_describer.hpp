@@ -45,6 +45,9 @@ class SIFT_Image_describer : public Image_describer
 {
 public:
 
+  using Regions_type = SIFT_Regions;
+  using Regions_ptr = Regions_type*;
+
   struct Params
   {
     Params(
@@ -123,15 +126,36 @@ public:
   /**
   @brief Detect regions on the image and compute their attributes (description)
   @param image Image.
-  @param regions The detected regions and attributes (the caller must delete the allocated data)
   @param mask 8-bit gray image for keypoint filtering (optional).
      Non-zero values depict the region of interest.
+  @return regions The detected regions and attributes (the caller must delete the allocated data)
   */
-  bool Describe
-  (
+  std::unique_ptr<Regions_type> Describe(
     const image::Image<unsigned char>& image,
-    std::unique_ptr<Regions> &regions,
-    const image::Image<unsigned char> * mask = nullptr
+    const image::Image<unsigned char>* mask = nullptr
+  )
+  {
+    return std::unique_ptr<Regions_type>(DescribeImpl(image, mask));
+  }
+
+  template<class Archive>
+  void serialize( Archive & ar )
+  {
+    ar(
+     cereal::make_nvp("params", _params),
+     cereal::make_nvp("bOrientation", _bOrientation));
+  }
+
+protected:
+  /// Allocate Regions type depending of the Image_describer
+  Regions_ptr Allocate() const override
+  {
+    return new SIFT_Regions;
+  }
+
+  Regions_ptr DescribeImpl(
+    const image::Image<unsigned char>& image,
+    const image::Image<unsigned char>* mask = nullptr
   ) override
   {
     const int w = image.Width(), h = image.Height();
@@ -151,13 +175,12 @@ public:
     // Process SIFT computation
     vl_sift_process_first_octave(filt, If.data());
 
-    Allocate(regions);
-
     // Build alias to cached data
-    SIFT_Regions * regionsCasted = dynamic_cast<SIFT_Regions*>(regions.get());
+    auto regions = std::unique_ptr<SIFT_Regions>(Allocate());
+
     // reserve some memory for faster keypoint saving
-    regionsCasted->Features().reserve(2000);
-    regionsCasted->Descriptors().reserve(2000);
+    regions->Features().reserve(2000);
+    regions->Descriptors().reserve(2000);
 
     while (true) {
       vl_sift_detect(filt);
@@ -198,8 +221,8 @@ public:
           #pragma omp critical
           #endif
           {
-            regionsCasted->Descriptors().push_back(descriptor);
-            regionsCasted->Features().push_back(fp);
+            regions->Descriptors().push_back(descriptor);
+            regions->Features().push_back(fp);
           }
         }
       }
@@ -208,21 +231,7 @@ public:
     }
     vl_sift_delete(filt);
 
-    return true;
-  };
-
-  /// Allocate Regions type depending of the Image_describer
-  void Allocate(std::unique_ptr<Regions> &regions) const override
-  {
-    regions.reset( new SIFT_Regions );
-  }
-
-  template<class Archive>
-  void serialize( Archive & ar )
-  {
-    ar(
-     cereal::make_nvp("params", _params),
-     cereal::make_nvp("bOrientation", _bOrientation));
+    return regions.release();
   }
 
 private:
