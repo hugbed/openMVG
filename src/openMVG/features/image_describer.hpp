@@ -54,18 +54,31 @@ public:
   @param mask 8-bit gray image for keypoint filtering (optional).
      Non-zero values depict the region of interest.
   */
-  virtual bool Describe
+  bool Describe
   (
     const image::Image<unsigned char> & image,
     std::unique_ptr<Regions> &regions,
     const image::Image<unsigned char> * mask = nullptr
-  ) = 0;
+  )
+  {
+    regions.reset(DescribeImpl(image, mask));
+    return regions != nullptr;
+  }
 
-  /// Allocate regions depending of the Image_describer
-  virtual void Allocate
-  (
-    std::unique_ptr<Regions> &regions
-  ) const = 0;
+  /**
+  @brief Detect regions on the image and compute their attributes (description)
+  @param image Image.
+  @param mask 8-bit gray image for keypoint filtering (optional).
+     Non-zero values depict the region of interest.
+  @return The detected regions and attributes
+  */
+  std::unique_ptr<Regions> Describe(
+    const image::Image<unsigned char> & image,
+    const image::Image<unsigned char> * mask = nullptr
+  )
+  {
+    return std::unique_ptr<Regions>(DescribeImpl(image, mask));
+  }
 
   //--
   // IO - one file for region features, one file for region descriptors
@@ -99,6 +112,15 @@ public:
   {
     return regions->LoadFeatures(sfileNameFeats);
   }
+
+protected:
+  /// Allocate regions depending of the Image_describer
+  virtual Regions* Allocate() const = 0;
+
+  virtual Regions* DescribeImpl(
+    const image::Image<unsigned char> & image,
+    const image::Image<unsigned char> * mask = nullptr
+  ) = 0;
 };
 
 } // namespace features
