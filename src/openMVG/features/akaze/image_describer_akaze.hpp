@@ -102,7 +102,6 @@ class AKAZE_Image_describer_SURF : public AKAZE_Image_describer
 public:
 
   using Regions_type = AKAZE_Float_Regions;
-  using Regions_ptr = Regions_type*;
 
   AKAZE_Image_describer_SURF(
     const Params& params = Params(),
@@ -113,21 +112,26 @@ public:
   std::unique_ptr<Regions_type> Describe(
     const image::Image<unsigned char>& image,
     const image::Image<unsigned char>* mask = nullptr
-  )
+  );
+
+  std::unique_ptr<Regions_type> Allocate() const
   {
-    return std::unique_ptr<Regions_type>(DescribeImpl(image, mask));
+    return std::unique_ptr<Regions_type>(new Regions_type);
   }
 
-protected:
-  virtual Regions_ptr AllocateImpl() const override
-  {
-    return new Regions_type;
-  }
-
-  Regions_ptr DescribeImpl(
+private:
+  std::unique_ptr<Regions> DescribeImpl(
     const image::Image<unsigned char>& image,
     const image::Image<unsigned char>* mask = nullptr
-  ) override;
+  ) override
+  {
+    return Describe(image, mask);
+  }
+
+  virtual std::unique_ptr<Regions> AllocateImpl() const override
+  {
+    return Allocate();
+  }
 };
 
 class AKAZE_Image_describer_LIOP : public AKAZE_Image_describer
@@ -135,7 +139,6 @@ class AKAZE_Image_describer_LIOP : public AKAZE_Image_describer
 
 public:
   using Regions_type = AKAZE_Liop_Regions;
-  using Regions_ptr = Regions_type*;
 
   AKAZE_Image_describer_LIOP(
     const Params& params = Params(),
@@ -145,28 +148,32 @@ public:
   std::unique_ptr<Regions_type> Describe(
     const image::Image<unsigned char>& image,
     const image::Image<unsigned char>* mask = nullptr
-  )
+  );
+
+  std::unique_ptr<Regions_type> Allocate() const
   {
-    return std::unique_ptr<Regions_type>(DescribeImpl(image, mask));
+    return std::unique_ptr<Regions_type>(new Regions_type);
   }
 
 protected:
-  virtual Regions_ptr AllocateImpl() const override
-  {
-    return new Regions_type;
-  }
-
-  Regions_ptr DescribeImpl(
+  std::unique_ptr<Regions> DescribeImpl(
     const image::Image<unsigned char>& image,
     const image::Image<unsigned char>* mask = nullptr
-  ) override;
+  ) override
+  {
+    return Describe(image, mask);
+  }
+
+  virtual std::unique_ptr<Regions> AllocateImpl() const override
+  {
+    return Allocate();
+  }
 };
 
 class AKAZE_Image_describer_MLDB : public AKAZE_Image_describer
 {
 public:
   using Regions_type = AKAZE_Binary_Regions;
-  using Regions_ptr = Regions_type*;
 
   AKAZE_Image_describer_MLDB(
     const Params& params = Params(),
@@ -176,26 +183,31 @@ public:
   std::unique_ptr<Regions_type> Describe(
     const image::Image<unsigned char>& image,
     const image::Image<unsigned char>* mask = nullptr
-  )
+  );
+
+  std::unique_ptr<Regions_type> Allocate() const
   {
-    return std::unique_ptr<Regions_type>(DescribeImpl(image, mask));
+    return std::unique_ptr<Regions_type>(new Regions_type);
   }
 
 protected:
-  virtual Regions_ptr AllocateImpl() const override
-  {
-    return new Regions_type;
-  }
-
   float GetfDescFactor() const override
   {
     return 11.f*sqrtf(2.f);
   }
 
-  Regions_ptr DescribeImpl(
+  std::unique_ptr<Regions> DescribeImpl(
     const image::Image<unsigned char>& image,
     const image::Image<unsigned char>* mask = nullptr
-  ) override;
+  ) override
+  {
+    return Describe(image, mask);
+  }
+
+  virtual std::unique_ptr<Regions> AllocateImpl() const override
+  {
+    return Allocate();
+  }
 };
 
 } // namespace features

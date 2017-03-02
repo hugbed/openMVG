@@ -46,7 +46,6 @@ class SIFT_Image_describer : public Image_describer
 public:
 
   using Regions_type = SIFT_Regions;
-  using Regions_ptr = Regions_type*;
 
   struct Params
   {
@@ -135,29 +134,6 @@ public:
     const image::Image<unsigned char>* mask = nullptr
   )
   {
-    return std::unique_ptr<Regions_type>(DescribeImpl(image, mask));
-  }
-
-  template<class Archive>
-  void serialize( Archive & ar )
-  {
-    ar(
-     cereal::make_nvp("params", _params),
-     cereal::make_nvp("bOrientation", _bOrientation));
-  }
-
-protected:
-  /// Allocate Regions type depending of the Image_describer
-  Regions_ptr AllocateImpl() const override
-  {
-    return new SIFT_Regions;
-  }
-
-  Regions_ptr DescribeImpl(
-    const image::Image<unsigned char>& image,
-    const image::Image<unsigned char>* mask = nullptr
-  ) override
-  {
     const int w = image.Width(), h = image.Height();
     //Convert to float
     const image::Image<float> If(image.GetMat().cast<float>());
@@ -176,7 +152,7 @@ protected:
     vl_sift_process_first_octave(filt, If.data());
 
     // Build alias to cached data
-    auto regions = std::unique_ptr<SIFT_Regions>(AllocateImpl());
+    auto regions = Allocate();
 
     // reserve some memory for faster keypoint saving
     regions->Features().reserve(2000);
@@ -231,10 +207,36 @@ protected:
     }
     vl_sift_delete(filt);
 
-    return regions.release();
+    return regions;
+  }
+
+  std::unique_ptr<Regions_type> Allocate() const
+  {
+    return std::unique_ptr<Regions_type>(new Regions_type);
+  }
+
+  template<class Archive>
+  void serialize( Archive & ar )
+  {
+    ar(
+     cereal::make_nvp("params", _params),
+     cereal::make_nvp("bOrientation", _bOrientation));
   }
 
 private:
+  std::unique_ptr<Regions> DescribeImpl(
+    const image::Image<unsigned char>& image,
+    const image::Image<unsigned char>* mask = nullptr
+  ) override
+  {
+    return Describe(image, mask);
+  }
+
+  std::unique_ptr<Regions> AllocateImpl() const override
+  {
+    return Allocate();
+  }
+
   Params _params;
   bool _bOrientation;
 };

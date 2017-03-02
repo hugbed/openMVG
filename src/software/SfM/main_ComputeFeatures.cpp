@@ -298,8 +298,7 @@ int main(int argc, char **argv)
           mask = &imageMask;
 
         // Compute features and descriptors and export them to files
-        std::unique_ptr<Regions> regions;
-        image_describer->Describe(imageGray, regions, mask);
+        auto regions = image_describer->Describe(imageGray, mask);
         image_describer->Save(regions.get(), sFeat, sDesc);
       }
 #ifdef OPENMVG_USE_OPENMP

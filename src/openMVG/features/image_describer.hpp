@@ -61,7 +61,7 @@ public:
     const image::Image<unsigned char> * mask = nullptr
   )
   {
-    regions.reset(DescribeImpl(image, mask));
+    regions = DescribeImpl(image, mask);
     return regions != nullptr;
   }
 
@@ -77,13 +77,13 @@ public:
     const image::Image<unsigned char> * mask = nullptr
   )
   {
-    return std::unique_ptr<Regions>(DescribeImpl(image, mask));
+    return DescribeImpl(image, mask);
   }
 
   /// Allocate regions depending of the Image_describer
-  std::unique_ptr<Regions> Allocate()
+  virtual std::unique_ptr<Regions> Allocate()
   {
-    return std::unique_ptr<Regions>(AllocateImpl());
+    return AllocateImpl();
   }
 
   //--
@@ -119,16 +119,13 @@ public:
     return regions->LoadFeatures(sfileNameFeats);
   }
 
-protected:
-  // Return raw pointers to take advantage of covariant return types
-  // Pointer can then be wrapped in smart pointer to derived or base class
-  // public non-virtual interface provides this wrapping
-  virtual Regions* AllocateImpl() const = 0;
-
-  virtual Regions* DescribeImpl(
+private:
+  virtual std::unique_ptr<Regions> DescribeImpl(
     const image::Image<unsigned char> & image,
     const image::Image<unsigned char> * mask = nullptr
   ) = 0;
+
+  virtual std::unique_ptr<Regions> AllocateImpl() const = 0;
 };
 
 } // namespace features

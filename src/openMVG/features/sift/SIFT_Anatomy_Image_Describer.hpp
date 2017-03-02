@@ -66,7 +66,6 @@ class SIFT_Anatomy_Image_describer : public Image_describer
 public:
 
   using Regions_type = SIFT_Regions;
-  using Regions_ptr = Regions_type*;
 
   struct Params
   {
@@ -113,20 +112,6 @@ public:
   :Image_describer(), params_(params)
   {}
 
-  /**
-  @brief Detect regions on the image and compute their attributes (description)
-  @param image Image.
-  @param mask 8-bit gray image for keypoint filtering (optional).
-     Non-zero values depict the region of interest.
-  @return regions The detected regions and attributes (the caller must delete the allocated data)
-  */
-  std::unique_ptr<Regions_type> Describe(
-    const image::Image<unsigned char>& image,
-    const image::Image<unsigned char>* mask = nullptr
-  )
-  {
-    return std::unique_ptr<Regions_type>(DescribeImpl(image, mask));
-  }
 
   bool Set_configuration_preset(EDESCRIBER_PRESET preset) override
   {
@@ -148,19 +133,6 @@ public:
     return true;
   }
 
-  template<class Archive>
-  void serialize( Archive & ar )
-  {
-    ar(cereal::make_nvp("params", params_));
-  }
-
-protected:
-  /// Allocate Regions type depending of the Image_describer
-  Regions_ptr AllocateImpl() const override
-  {
-    return new Regions_type;
-  }
-
   /**
   @brief Detect regions on the image and compute their attributes (description)
   @param image Image.
@@ -168,16 +140,16 @@ protected:
      Non-zero values depict the region of interest.
   @return regions The detected regions and attributes (the caller must delete the allocated data)
   */
-  Regions_ptr DescribeImpl(
+  std::unique_ptr<Regions_type> Describe(
     const image::Image<unsigned char>& image,
     const image::Image<unsigned char>* mask = nullptr
-  ) override
+  )
   {
     // Convert to float in range [0;1]
     const image::Image<float> If(image.GetMat().cast<float>()/255.0f);
 
     // compute sift keypoints
-    auto regions = std::unique_ptr<Regions_type>(AllocateImpl());
+    auto regions = Allocate();
     {
       using namespace openMVG::features::sift;
       const int supplementary_images = 3;
@@ -229,10 +201,35 @@ protected:
         }
       }
     }
-    return regions.release();
+    return regions;
   };
 
+  std::unique_ptr<Regions_type> Allocate() const
+  {
+    return std::unique_ptr<Regions_type>(new Regions_type);
+  }
+
+
+  template<class Archive>
+  void serialize( Archive & ar )
+  {
+    ar(cereal::make_nvp("params", params_));
+  }
+
 private:
+  std::unique_ptr<Regions> DescribeImpl(
+    const image::Image<unsigned char>& image,
+    const image::Image<unsigned char>* mask = nullptr
+  ) override
+  {
+    return Describe(image, mask);
+  }
+
+  std::unique_ptr<Regions> AllocateImpl() const override
+  {
+    return Allocate();
+  }
+
   Params params_;
 };
 
